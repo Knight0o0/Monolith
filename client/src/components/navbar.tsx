@@ -6,7 +6,6 @@ import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AdminGate } from "@/components/admin-gate";
 import { SearchTrigger } from "@/components/search";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 const navLinks = [
   { href: "/", label: "首页" },
@@ -82,7 +81,7 @@ export function Navbar() {
           {/* 搜索 + 主题切换 */}
           <div className="hidden md:flex items-center gap-[2px]">
             <SearchTrigger />
-            <ThemeToggle />
+            {/* 主题切换已按照深色系审美哲学强行移除 */}
           </div>
 
           {/* 移动端菜单 */}
@@ -107,7 +106,7 @@ export function Navbar() {
                   </Link>
                 ))}
                 <div className="mt-[8px] px-[16px] flex items-center gap-[8px]">
-                  <ThemeToggle />
+                  {/* 仅保留搜索工具 */}
                   <span className="text-[12px] text-muted-foreground/40">主题</span>
                 </div>
               </nav>
