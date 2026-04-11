@@ -11,10 +11,14 @@ function getEffectiveTheme(theme: Theme): "dark" | "light" {
   return theme;
 }
 
-/** 将主题应用到 DOM */
+/** 将主题应用到 DOM + theme-color */
 function applyTheme(theme: Theme) {
   const effective = getEffectiveTheme(theme);
   document.documentElement.setAttribute("data-theme", effective);
+  // 同步浏览器地址栏颜色
+  const themeColor = effective === "light" ? "#ffffff" : "#0a0a0f";
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", themeColor);
 }
 
 export function ThemeToggle() {

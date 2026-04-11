@@ -28,7 +28,7 @@ export function ArchivePage() {
 
   return (
     <div className="mx-auto w-full max-w-[720px] py-[32px] lg:py-[56px] px-[16px] lg:px-0">
-      <SeoHead title="归档" description={`共 ${posts.length} 篇文章，按时间倒序排列。`} url="/archive" />
+      <SeoHead title="归档" description={`共 ${posts.length} 篇文章，按时间倒序排列。`} url="/archive" breadcrumbs={[{ name: "首页", url: "/" }, { name: "归档", url: "/archive" }]} />
       <div className="animate-fade-in-up">
         <h1 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.02em]">归档</h1>
         <p className="mt-[8px] text-[14px] text-muted-foreground">共 {posts.length} 篇文章，按时间倒序排列。</p>

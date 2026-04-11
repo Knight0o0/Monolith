@@ -45,9 +45,15 @@ const renderer = new marked.Renderer();
 
 // 标题：注入 id 属性（用于 TOC 锚点）
 function slugify(text: string): string {
-  return text
+  // 循环去除 HTML 标签（防止多字符序列截断后残留，如 <scr<script>ipt>）
+  let cleaned = text;
+  let prev = "";
+  while (prev !== cleaned) {
+    prev = cleaned;
+    cleaned = cleaned.replace(/<[^>]*>/g, "");
+  }
+  return cleaned
     .toLowerCase()
-    .replace(/<[^>]*>/g, "")      // 去除 HTML 标签
     .replace(/[^\w\u4e00-\u9fff\s-]/g, "") // 保留中文、字母、数字、空格、连字符
     .replace(/\s+/g, "-")          // 空格转连字符
     .replace(/-+/g, "-")           // 合并连续连字符
@@ -71,7 +77,7 @@ renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
   const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M20 6 9 17l-5-5"/></svg>`;
 
   return `<div class="code-block-wrapper relative group">
-    <button class="copy-code-btn absolute top-2 right-2 flex items-center justify-center p-1.5 rounded-md border border-border/40 bg-card/60 text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-card hover:border-border/80 opacity-40 hover:opacity-100 group-hover:opacity-100 z-10" aria-label="复制代码" data-copy-icon='${copyIcon}' data-check-icon='${checkIcon}'>
+    <button class="copy-code-btn absolute top-2 right-2 flex items-center justify-center p-1.5 rounded-md border border-border/40 bg-card/60 text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-card hover:border-border/80 opacity-40 hover:opacity-100 group-hover:opacity-100 z-10" aria-label="复制代码">
       ${copyIcon}
     </button>
     <pre class="hljs">${langLabel}<code class="hljs language-${language || "text"}">${highlighted}</code></pre>
@@ -160,7 +166,6 @@ export function renderMarkdown(md: string): string {
       "allow", "allowfullscreen", "frameborder", "scrolling",
       "playsinline", "preload", "controls",
       "loading", "decoding",
-      "data-copy-icon", "data-check-icon",
       "target", "rel",
     ],
   });

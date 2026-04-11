@@ -666,6 +666,7 @@ export class TursoAdapter implements IDatabase {
         excerpt: posts.excerpt,
         content: posts.content,
         createdAt: posts.createdAt,
+        updatedAt: posts.updatedAt,
       })
       .from(posts)
       .where(eq(posts.published, true))

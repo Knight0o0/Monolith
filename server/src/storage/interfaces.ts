@@ -182,8 +182,8 @@ export interface IDatabase {
   incrementViewCount(slug: string): Promise<void>;
   getViewStats(topN?: number): Promise<ViewStats>;
 
-  /* RSS 专用快捷方法 */
-  getRecentPublishedPosts(limit: number): Promise<Pick<Post, "slug" | "title" | "excerpt" | "content" | "createdAt">[]>;
+  /* RSS / Sitemap 专用快捷方法 */
+  getRecentPublishedPosts(limit: number): Promise<Pick<Post, "slug" | "title" | "excerpt" | "content" | "createdAt" | "updatedAt">[]>;
 
   /* 评论 */
   getApprovedComments(postSlug: string): Promise<Comment[]>;

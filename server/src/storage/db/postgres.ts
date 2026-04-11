@@ -466,7 +466,7 @@ export class PostgresAdapter implements IDatabase {
       const rows = await this.db.execute(
         sql`SELECT date, count FROM daily_views WHERE date >= ${since} ORDER BY date ASC`
       );
-      return (rows.rows || []).map((r: any) => ({ date: r.date, count: r.count }));
+      return (Array.isArray(rows) ? rows : []).map((r: any) => ({ date: r.date, count: r.count }));
     } catch {
       await this.ensureDailyViewsTable();
       return [];
@@ -476,7 +476,8 @@ export class PostgresAdapter implements IDatabase {
   async getTotalViews(): Promise<number> {
     try {
       const rows = await this.db.execute(sql`SELECT COALESCE(SUM(count), 0) as total FROM daily_views`);
-      return (rows.rows?.[0] as any)?.total ?? 0;
+      const result = Array.isArray(rows) ? rows : [];
+      return (result[0] as any)?.total ?? 0;
     } catch {
       return 0;
     }
@@ -665,6 +666,7 @@ export class PostgresAdapter implements IDatabase {
         excerpt: pgPosts.excerpt,
         content: pgPosts.content,
         createdAt: pgPosts.createdAt,
+        updatedAt: pgPosts.updatedAt,
       })
       .from(pgPosts)
       .where(eq(pgPosts.published, true))
@@ -675,6 +677,7 @@ export class PostgresAdapter implements IDatabase {
       ...r,
       excerpt: r.excerpt || "",
       createdAt: this.ts(r.createdAt),
+      updatedAt: this.ts(r.updatedAt),
     }));
   }
 

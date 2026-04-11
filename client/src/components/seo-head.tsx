@@ -1,5 +1,10 @@
 import { useEffect } from "react";
 
+type BreadcrumbItem = {
+  name: string;
+  url: string;
+};
+
 type SeoProps = {
   title?: string;
   description?: string;
@@ -7,8 +12,11 @@ type SeoProps = {
   type?: "website" | "article";
   image?: string;
   publishedTime?: string;
+  modifiedTime?: string;
   tags?: string[];
   siteName?: string;
+  breadcrumbs?: BreadcrumbItem[];
+  noindex?: boolean;
 };
 
 const DEFAULT_SITE_NAME = "Monolith";
@@ -29,8 +37,11 @@ export function SeoHead({
   type = "website",
   image,
   publishedTime,
+  modifiedTime,
   tags,
   siteName = DEFAULT_SITE_NAME,
+  breadcrumbs,
+  noindex = false,
 }: SeoProps) {
   const fullTitle = title ? `${title} | ${siteName}` : `${siteName} — ${DEFAULT_DESCRIPTION}`;
   const metaDescription = description || DEFAULT_DESCRIPTION;
@@ -66,6 +77,17 @@ export function SeoHead({
     // Meta Description
     setMeta("name", "description", metaDescription);
 
+    // Robots（404 等页面需要 noindex）
+    if (noindex) {
+      setMeta("name", "robots", "noindex, nofollow");
+    } else {
+      // 移除可能残留的 noindex
+      const robotsMeta = document.querySelector('meta[name="robots"]');
+      if (robotsMeta?.getAttribute("content")?.includes("noindex")) {
+        robotsMeta.remove();
+      }
+    }
+
     // Canonical URL
     setLink("canonical", canonicalUrl);
 
@@ -85,17 +107,32 @@ export function SeoHead({
     setMeta("name", "twitter:image", ogImage);
 
     // Article 专属
+    // 先清理旧的 article 相关 meta（防止页面切换残留）
+    document.querySelectorAll('meta[property^="article:"]').forEach((el) => el.remove());
+
     if (type === "article" && publishedTime) {
       setMeta("property", "article:published_time", publishedTime);
     }
+    if (type === "article" && modifiedTime) {
+      setMeta("property", "article:modified_time", modifiedTime);
+    }
     if (type === "article" && tags?.length) {
-      tags.forEach((tag) => setMeta("property", "article:tag", tag));
+      // 每个标签需要独立的 <meta> 元素（不能复用同一个）
+      tags.forEach((tag) => {
+        const el = document.createElement("meta");
+        el.setAttribute("property", "article:tag");
+        el.setAttribute("content", tag);
+        document.head.appendChild(el);
+      });
     }
 
-    // JSON-LD 结构化数据（仅文章页）
+    // JSON-LD 结构化数据
     let ldScript = document.querySelector('script[data-seo="json-ld"]') as HTMLScriptElement | null;
+    const jsonLdArray: object[] = [];
+
     if (type === "article") {
-      const jsonLd = {
+      // 文章页：BlogPosting
+      jsonLdArray.push({
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         headline: title,
@@ -103,6 +140,7 @@ export function SeoHead({
         url: canonicalUrl,
         image: ogImage,
         datePublished: publishedTime,
+        ...(modifiedTime ? { dateModified: modifiedTime } : {}),
         author: {
           "@type": "Person",
           name: siteName,
@@ -112,25 +150,59 @@ export function SeoHead({
           name: siteName,
         },
         ...(tags?.length ? { keywords: tags.join(", ") } : {}),
-      };
+      });
+    } else if (url === "/") {
+      // 首页：WebSite + SearchAction
+      jsonLdArray.push({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: siteName,
+        url: window.location.origin,
+        description: metaDescription,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${window.location.origin}/?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      });
+    }
 
+    // 面包屑导航
+    if (breadcrumbs?.length) {
+      jsonLdArray.push({
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: breadcrumbs.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: `${window.location.origin}${item.url}`,
+        })),
+      });
+    }
+
+    if (jsonLdArray.length > 0) {
       if (!ldScript) {
         ldScript = document.createElement("script");
         ldScript.setAttribute("type", "application/ld+json");
         ldScript.setAttribute("data-seo", "json-ld");
         document.head.appendChild(ldScript);
       }
-      ldScript.textContent = JSON.stringify(jsonLd);
+      ldScript.textContent = jsonLdArray.length === 1
+        ? JSON.stringify(jsonLdArray[0])
+        : JSON.stringify(jsonLdArray);
     } else if (ldScript) {
       ldScript.remove();
     }
 
-    // 组件卸载时清理 JSON-LD
+    // 组件卸载时清理动态注入的标签
     return () => {
       const script = document.querySelector('script[data-seo="json-ld"]');
       script?.remove();
+      // 清理 article 相关 meta（防止页面切换残留）
+      document.querySelectorAll('meta[property^="article:"]').forEach((el) => el.remove());
     };
-  }, [fullTitle, metaDescription, canonicalUrl, ogImage, type, publishedTime, title, siteName, tags]);
+  }, [fullTitle, metaDescription, canonicalUrl, ogImage, type, publishedTime, modifiedTime, title, siteName, tags, breadcrumbs, noindex]);
 
   return null; // 纯副作用组件，不渲染 DOM
 }

@@ -17,6 +17,7 @@ import { AdminPages } from "@/pages/admin/pages";
 import { AdminComments } from "@/pages/admin/comments";
 import { AdminMedia } from "@/pages/admin/media";
 import { DynamicPage } from "@/pages/dynamic-page";
+import { NotFoundPage } from "@/pages/not-found";
 
 /** 将 HTML 字符串安全注入到容器中（支持 script 标签执行） */
 function injectHtml(container: HTMLElement, html: string) {
@@ -107,11 +108,7 @@ export function App() {
             </Route>
             <Route path="/page/:slug" component={DynamicPage} />
             <Route>
-              <div className="flex flex-1 items-center justify-center">
-                <h1 className="text-[28px] font-semibold text-muted-foreground">
-                  404 — 页面未找到
-                </h1>
-              </div>
+              <NotFoundPage />
             </Route>
           </Switch>
         </main>

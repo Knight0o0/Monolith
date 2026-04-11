@@ -250,7 +250,7 @@ app.get("/sitemap.xml", async (c) => {
   for (const post of allPosts) {
     urls.push(`  <url>
     <loc>${escXml(siteUrl)}/posts/${escXml(post.slug)}</loc>
-    <lastmod>${new Date(post.createdAt).toISOString().split("T")[0]}</lastmod>
+    ${(() => { const d = new Date(post.updatedAt || post.createdAt); return `<lastmod>${Number.isNaN(d.getTime()) ? new Date().toISOString().split("T")[0] : d.toISOString().split("T")[0]}</lastmod>`; })()}
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`);

@@ -70,7 +70,12 @@ export function PostPage() {
         url={`/posts/${post.slug}`}
         type="article"
         publishedTime={post.createdAt}
+        modifiedTime={post.updatedAt}
         tags={post.tags}
+        breadcrumbs={[
+          { name: "首页", url: "/" },
+          { name: post.title, url: `/posts/${post.slug}` },
+        ]}
       />
 
       {/* 阅读进度条 */}
@@ -111,21 +116,20 @@ export function PostPage() {
             className="prose-monolith animate-fade-in delay-3" 
             dangerouslySetInnerHTML={{ __html: htmlContent }} 
             onClick={(e) => {
-              const target = e.target as HTMLElement;
+          const target = e.target as HTMLElement;
               const btn = target.closest('.copy-code-btn');
               if (btn) {
                 const wrapper = btn.closest('.code-block-wrapper');
                 const codeNode = wrapper?.querySelector('code');
                 if (codeNode && codeNode.textContent) {
+                  // 固定 SVG 常量（避免从 DOM 属性读取后设 innerHTML 的 XSS 风险）
+                  const COPY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+                  const CHECK_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M20 6 9 17l-5-5"/></svg>';
                   navigator.clipboard.writeText(codeNode.textContent).then(() => {
-                    const originalIcon = btn.getAttribute('data-copy-icon');
-                    const checkIcon = btn.getAttribute('data-check-icon');
-                    if (checkIcon && originalIcon) {
-                      btn.innerHTML = checkIcon;
-                      setTimeout(() => {
-                        btn.innerHTML = originalIcon;
-                      }, 2000);
-                    }
+                    btn.innerHTML = CHECK_SVG;
+                    setTimeout(() => {
+                      btn.innerHTML = COPY_SVG;
+                    }, 2000);
                   }).catch(console.error);
                 }
               }

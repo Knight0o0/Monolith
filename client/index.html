@@ -12,11 +12,13 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Monolith" />
     <meta property="og:locale" content="zh_CN" />
+    <meta property="og:image" content="/og-default.png" />
 
     <!-- Twitter Card 默认标签 -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Monolith — 代码、设计与边缘计算" />
     <meta name="twitter:description" content="书写代码、设计与边缘计算的个人博客。" />
+    <meta name="twitter:image" content="/og-default.png" />
 
     <title>Monolith — 代码、设计与边缘计算</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -31,6 +33,9 @@
           ? (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light')
           : t;
         document.documentElement.setAttribute('data-theme', d);
+        // 同步 theme-color
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', d === 'light' ? '#ffffff' : '#0a0a0f');
       })();
     </script>
     <div id="root" class="min-h-screen flex flex-col"></div>
