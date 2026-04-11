@@ -70,7 +70,12 @@ export function PostPage() {
         url={`/posts/${post.slug}`}
         type="article"
         publishedTime={post.createdAt}
+        modifiedTime={post.updatedAt}
         tags={post.tags}
+        breadcrumbs={[
+          { name: "首页", url: "/" },
+          { name: post.title, url: `/posts/${post.slug}` },
+        ]}
       />
 
       {/* 阅读进度条 */}
