@@ -80,8 +80,9 @@ export function Navbar() {
           </nav>
 
           {/* 搜索 + 主题切换 */}
-          <div className="hidden md:flex items-center gap-[2px]">
+          <div className="hidden md:flex items-center gap-[4px]">
             <SearchTrigger />
+            <span className="w-[1px] h-[16px] bg-border/40 mx-[2px]" />
             <ThemeToggle />
           </div>
 

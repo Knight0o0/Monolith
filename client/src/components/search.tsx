@@ -225,14 +225,10 @@ export function SearchTrigger() {
   return (
     <button
       onClick={triggerSearch}
-      className="inline-flex items-center gap-[6px] h-[32px] px-[10px] rounded-[8px] bg-muted/30 border border-border/30 text-[13px] text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all duration-200 cursor-pointer"
+      className="inline-flex items-center justify-center h-[32px] w-[32px] rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-accent/30 transition-all duration-200 cursor-pointer"
       title="搜索 (Ctrl+K)"
     >
-      <Search className="h-[14px] w-[14px]" />
-      <span className="hidden lg:inline">搜索</span>
-      <kbd className="hidden lg:inline ml-[4px] px-[4px] py-[1px] rounded bg-muted/50 font-mono text-[10px] text-muted-foreground/60">
-        ⌘K
-      </kbd>
+      <Search className="h-[16px] w-[16px]" />
     </button>
   );
 }
