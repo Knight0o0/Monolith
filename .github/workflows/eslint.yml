@@ -26,14 +26,14 @@ jobs:
       - name: Install client deps + ESLint
         working-directory: client
         run: |
-          npm ci
-          npm install --no-save eslint @eslint/js @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-security @microsoft/eslint-formatter-sarif
+          npm install
+          npm install --no-save eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-security @microsoft/eslint-formatter-sarif
 
       - name: Install server deps + ESLint
         working-directory: server
         run: |
-          npm ci
-          npm install --no-save eslint @eslint/js @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-security @microsoft/eslint-formatter-sarif
+          npm install
+          npm install --no-save eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-security @microsoft/eslint-formatter-sarif
 
       - name: Create ESLint config (client)
         working-directory: client
