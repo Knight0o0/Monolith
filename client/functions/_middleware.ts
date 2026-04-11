@@ -57,8 +57,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const assetRes = await context.env.ASSETS.fetch(new Request(indexUrl.toString()));
     let html = await assetRes.text();
 
-    // 生成摘要（优先用 excerpt，否则从 content 截取）
-    const description = post.excerpt || (post.content ? post.content.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim().slice(0, 160) : "");
+    // 更完整的 HTML 标签清理（包括未闭合标签如 <script）
+    const stripHtml = (html: string) => html.replace(/<[^>]*>?/g, "").replace(/\s+/g, " ").trim();
+    const description = post.excerpt || (post.content ? stripHtml(post.content).slice(0, 160) : "");
     const siteOrigin = url.origin;
     const articleUrl = `${siteOrigin}/posts/${post.slug}`;
     const ogImage = `${siteOrigin}/og-default.png`;

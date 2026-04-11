@@ -202,7 +202,7 @@ export function SeoHead({
       // 清理 article 相关 meta（防止页面切换残留）
       document.querySelectorAll('meta[property^="article:"]').forEach((el) => el.remove());
     };
-  }, [fullTitle, metaDescription, canonicalUrl, ogImage, type, publishedTime, modifiedTime, title, siteName, tags, breadcrumbs]);
+  }, [fullTitle, metaDescription, canonicalUrl, ogImage, type, publishedTime, modifiedTime, title, siteName, tags, breadcrumbs, noindex]);
 
   return null; // 纯副作用组件，不渲染 DOM
 }
