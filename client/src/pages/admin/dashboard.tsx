@@ -52,8 +52,32 @@ export function AdminDashboard() {
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
   const [batchOperating, setBatchOperating] = useState(false);
 
+  const filteredPosts = useMemo(() => {
+    let result = posts;
+    if (filter === "published") result = result.filter((p) => p.published);
+    if (filter === "draft") result = result.filter((p) => !p.published);
+    if (selectedTag) result = result.filter((p) => p.tags.includes(selectedTag));
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((p) =>
+        p.title.toLowerCase().includes(q) ||
+        p.slug.toLowerCase().includes(q) ||
+        p.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [posts, filter, selectedTag, search]);
+
+  useEffect(() => {
+    setSelectedSlugs(prev => {
+      if (prev.size === 0) return prev;
+      const valid = new Set([...prev].filter(s => filteredPosts.some(p => p.slug === s)));
+      return valid.size === prev.size ? prev : valid;
+    });
+  }, [filteredPosts]);
+
   const toggleSelectAll = () => {
-    if (selectedSlugs.size === filteredPosts.length) setSelectedSlugs(new Set());
+    if (selectedSlugs.size === filteredPosts.length && filteredPosts.length > 0) setSelectedSlugs(new Set());
     else setSelectedSlugs(new Set(filteredPosts.map((p) => p.slug)));
   };
 
@@ -94,22 +118,6 @@ export function AdminDashboard() {
     const tagSet = new Set(posts.flatMap((p) => p.tags));
     return Array.from(tagSet).sort();
   }, [posts]);
-
-  const filteredPosts = useMemo(() => {
-    let result = posts;
-    if (filter === "published") result = result.filter((p) => p.published);
-    if (filter === "draft") result = result.filter((p) => !p.published);
-    if (selectedTag) result = result.filter((p) => p.tags.includes(selectedTag));
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.slug.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q))
-      );
-    }
-    return result;
-  }, [posts, filter, selectedTag, search]);
 
   // 导航项配置
   const navItems = [
@@ -296,7 +304,7 @@ export function AdminDashboard() {
             const published = posts.filter(p => p.published);
             const withExcerpt = published.filter(p => p.excerpt && p.excerpt.trim().length > 0);
             const withTags = published.filter(p => p.tags.length > 0);
-            const goodSlug = published.filter(p => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug));
+            const goodSlug = published.filter(p => /^[a-z0-9-]+$/.test(p.slug) && !p.slug.includes("--") && !p.slug.startsWith("-") && !p.slug.endsWith("-"));
             const withTitle50 = published.filter(p => p.title.length <= 60 && p.title.length >= 5);
 
             const checks = [

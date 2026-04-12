@@ -1451,9 +1451,9 @@
   transform: translateY(0);
 }
 
-/* ── 阅读模式 ─────────────────────────────── */
-.reading-mode header,
-.reading-mode footer,
+  /* ── 阅读模式 ─────────────────────────────── */
+  .reading-mode .app-header,
+  .reading-mode .app-footer,
 .reading-mode .reading-progress-bar,
 .reading-mode .toc-desktop,
 .reading-mode .toc-mobile,

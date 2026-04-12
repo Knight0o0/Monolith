@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { fetchReactions, toggleReaction } from "@/lib/api";
 
 const REACTION_TYPES = [
@@ -13,18 +13,35 @@ interface PostReactionsProps {
 }
 
 export function PostReactions({ slug }: PostReactionsProps) {
-  const [counts, setCounts] = useState<Record<string, number>>({});
+  const currentSlugRef = useRef(slug);
+  const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
   const [animating, setAnimating] = useState<string | null>(null);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchReactions(slug).then(setCounts);
+    currentSlugRef.current = slug;
+    let cancelled = false;
+    
+    // 显式重置状态，防止跨文章污染
+    setCounts(new Map());
+    setActiveTypes(new Set());
+
+    fetchReactions(slug).then((data) => {
+      if (!cancelled && currentSlugRef.current === slug) {
+        setCounts(new Map(Object.entries(data || {})));
+      }
+    }).catch(() => {
+      if (!cancelled) setCounts(new Map());
+    });
+
     // 从 localStorage 恢复已点击状态
     const saved = localStorage.getItem(`reactions:${slug}`);
     if (saved) {
       try { setActiveTypes(new Set(JSON.parse(saved))); } catch { /* */ }
     }
+
+    return () => { cancelled = true; };
   }, [slug]);
 
   const handleReaction = async (type: string) => {
@@ -36,8 +53,11 @@ export function PostReactions({ slug }: PostReactionsProps) {
     setTimeout(() => setAnimating(null), 600);
 
     try {
-      const result = await toggleReaction(slug, type);
-      setCounts(result.reactions);
+      const requestSlug = slug;
+      const result = await toggleReaction(requestSlug, type);
+      if (currentSlugRef.current !== requestSlug) return;
+      
+      setCounts(new Map(Object.entries(result.reactions || {})));
 
       // 更新本地标记
       setActiveTypes((prev) => {
@@ -47,7 +67,7 @@ export function PostReactions({ slug }: PostReactionsProps) {
         } else {
           next.delete(type);
         }
-        localStorage.setItem(`reactions:${slug}`, JSON.stringify([...next]));
+        localStorage.setItem(`reactions:${requestSlug}`, JSON.stringify([...next]));
         return next;
       });
     } catch {
@@ -61,7 +81,7 @@ export function PostReactions({ slug }: PostReactionsProps) {
     }
   };
 
-  const total = REACTION_TYPES.reduce((acc, { type }) => acc + (counts[type] || 0), 0);
+  const total = REACTION_TYPES.reduce((acc, { type }) => acc + (counts.get(type) || 0), 0);
 
   return (
     <div className="post-reactions">
@@ -80,8 +100,8 @@ export function PostReactions({ slug }: PostReactionsProps) {
             className={`post-reactions__btn ${activeTypes.has(type) ? "post-reactions__btn--active" : ""} ${animating === type ? "post-reactions__btn--animate" : ""}`}
           >
             <span className="post-reactions__emoji">{emoji}</span>
-            {(counts[type] ?? 0) > 0 && (
-              <span className="post-reactions__count">{counts[type]}</span>
+            {(counts.get(type) ?? 0) > 0 && (
+              <span className="post-reactions__count">{counts.get(type)}</span>
             )}
           </button>
         ))}

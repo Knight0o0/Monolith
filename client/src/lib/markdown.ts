@@ -111,6 +111,8 @@ renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
 
   // 拆分为行，生成行号和高亮标记
   const lines = highlighted.split("\n");
+  const rawLines = text.split("\n");
+  
   // 去掉末尾空行
   if (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop();
 
@@ -121,7 +123,8 @@ renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
     const isHighlighted = highlightLines.has(lineNum);
 
     // diff 高亮：检测原始文本行前缀
-    const rawLine = text.split("\n")[i] || "";
+    // eslint-disable-next-line security/detect-object-injection
+    const rawLine = rawLines[i] || "";
     let diffClass = "";
     if (isDiff) {
       if (rawLine.startsWith("+")) diffClass = " diff-add";

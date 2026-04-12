@@ -43,7 +43,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl backdrop-saturate-150">
+      <header className="app-header sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-[56px] max-w-[1440px] items-center justify-between px-[20px] lg:px-[40px]">
           {/* Logo — 双击触发管理暗门 */}
           <Link

@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
+      includeAssets: ["favicon.png", "icon-192.png", "icon-512.png"],
       manifest: {
         name: "Monolith",
         short_name: "Monolith",
@@ -34,7 +34,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/images\.monolith\.example\/.*$/i, // 替换为真实的图床或API
+            urlPattern: /\/cdn\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheName: "monolith-images",

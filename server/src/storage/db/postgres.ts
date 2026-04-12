@@ -99,6 +99,7 @@ export class PostgresAdapter implements IDatabase {
         value TEXT NOT NULL
       )
     `;
+    await this.client`
       CREATE TABLE IF NOT EXISTS comments (
         id SERIAL PRIMARY KEY,
         post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,

@@ -52,6 +52,7 @@ export function ShareButtons({ title, url, className = "" }: ShareButtonsProps) 
           rel="noopener noreferrer"
           className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-card/60 border border-border/30 text-muted-foreground transition-all hover:bg-black hover:text-white hover:border-black dark:hover:bg-white dark:hover:text-black dark:hover:border-white"
           title="分享到 X"
+          aria-label="分享到 X"
         >
           <TwitterIcon className="h-[14px] w-[14px]" />
         </a>
@@ -61,6 +62,7 @@ export function ShareButtons({ title, url, className = "" }: ShareButtonsProps) 
           rel="noopener noreferrer"
           className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-card/60 border border-border/30 text-muted-foreground transition-all hover:bg-[#0077b5] hover:text-white hover:border-[#0077b5]"
           title="分享到 LinkedIn"
+          aria-label="分享到 LinkedIn"
         >
           <LinkedinIcon className="h-[14px] w-[14px]" />
         </a>
@@ -68,6 +70,7 @@ export function ShareButtons({ title, url, className = "" }: ShareButtonsProps) 
           onClick={handleCopy}
           className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-card/60 border border-border/30 text-muted-foreground transition-all hover:bg-card hover:text-foreground hover:border-border/60"
           title={copied ? "已复制链接!" : "复制链接"}
+          aria-label={copied ? "已复制链接!" : "复制链接"}
         >
           <Link2 className={`h-[14px] w-[14px] transition-transform ${copied ? "scale-110 text-green-500" : ""}`} />
         </button>
@@ -76,6 +79,7 @@ export function ShareButtons({ title, url, className = "" }: ShareButtonsProps) 
             onClick={handleNativeShare}
             className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-card/60 border border-border/30 text-muted-foreground transition-all hover:bg-card hover:text-foreground hover:border-border/60 sm:hidden"
             title="系统分享"
+            aria-label="系统分享"
           >
             <Share2 className="h-[14px] w-[14px]" />
           </button>
