@@ -11,6 +11,7 @@ import { SeoHead } from "@/components/seo-head";
 import { CommentsSection } from "@/components/comments";
 import { RelatedPosts } from "@/components/related-posts";
 import { SeriesNav } from "@/components/series-nav";
+import { PostReactions } from "@/components/post-reactions";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" });
@@ -145,6 +146,9 @@ export function PostPage() {
             </Link>
             <span className="text-[12px] text-muted-foreground/40">发布于 {formatDate(post.createdAt)}</span>
           </div>
+
+          {/* 表情反应 */}
+          <PostReactions slug={post.slug} />
 
           {/* 系列导航 */}
           {post.seriesSlug && (

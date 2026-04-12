@@ -1139,3 +1139,106 @@
 [data-theme="light"] .series-nav__list {
   border-bottom-color: oklch(0.88 0 0 / 40%);
 }
+
+/* ── 文章表情反应组件 ──────────────────────── */
+
+.post-reactions {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.post-reactions__label {
+  font-size: 12px;
+  color: oklch(0.5 0 0);
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+.post-reactions__buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.post-reactions__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid oklch(0.35 0 0 / 40%);
+  background: oklch(0.18 0 0 / 50%);
+  color: oklch(0.6 0 0);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.post-reactions__btn:hover {
+  border-color: oklch(0.45 0 0);
+  background: oklch(0.25 0 0 / 60%);
+  transform: translateY(-1px);
+}
+
+.post-reactions__btn--active {
+  border-color: oklch(0.55 0.18 220 / 60%);
+  background: oklch(0.55 0.18 220 / 12%);
+  color: oklch(0.85 0.1 220);
+}
+
+.post-reactions__btn--active:hover {
+  border-color: oklch(0.55 0.18 220 / 80%);
+  background: oklch(0.55 0.18 220 / 18%);
+}
+
+.post-reactions__emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.post-reactions__count {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 14px;
+}
+
+/* 弹跳动画 */
+.post-reactions__btn--animate {
+  animation: reaction-bounce 0.5s ease;
+}
+
+@keyframes reaction-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.25); }
+  60% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* ── 亮色模式 ── */
+[data-theme="light"] .post-reactions__label {
+  color: oklch(0.5 0 0);
+}
+
+[data-theme="light"] .post-reactions__btn {
+  border-color: oklch(0.85 0 0 / 50%);
+  background: oklch(0.97 0 0);
+  color: oklch(0.4 0 0);
+}
+
+[data-theme="light"] .post-reactions__btn:hover {
+  border-color: oklch(0.7 0 0);
+  background: oklch(0.94 0 0);
+}
+
+[data-theme="light"] .post-reactions__btn--active {
+  border-color: oklch(0.55 0.18 220 / 50%);
+  background: oklch(0.55 0.18 220 / 8%);
+  color: oklch(0.4 0.15 220);
+}
+
+[data-theme="light"] .post-reactions__btn--active:hover {
+  border-color: oklch(0.55 0.18 220 / 70%);
+  background: oklch(0.55 0.18 220 / 14%);
+}

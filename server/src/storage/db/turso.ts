@@ -7,7 +7,7 @@
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import { eq, desc, sql } from "drizzle-orm";
-import { posts, tags, postTags, pages, comments } from "../../db/schema";
+import { posts, tags, postTags, pages, comments, reactions } from "../../db/schema";
 import type {
   IDatabase, Post, PostSummary, Tag, Page, PageSummary,
   CreatePostInput, UpdatePostInput, UpsertPageInput,
@@ -801,5 +801,41 @@ export class TursoAdapter implements IDatabase {
       .where(sql`${posts.seriesSlug} = ${seriesSlug} AND ${posts.published} = 1`)
       .orderBy(posts.seriesOrder);
     return rows.map(r => ({ slug: r.slug, title: r.title, seriesOrder: r.seriesOrder ?? 0 }));
+  }
+
+  async getReactions(postSlug: string): Promise<Record<string, number>> {
+    const rows = await this.db
+      .select({ type: reactions.type, count: sql<number>`COUNT(*)` })
+      .from(reactions)
+      .where(eq(reactions.postSlug, postSlug))
+      .groupBy(reactions.type);
+    const result: Record<string, number> = {};
+    for (const row of rows) {
+      result[row.type] = row.count;
+    }
+    return result;
+  }
+
+  async toggleReaction(postSlug: string, type: string, ipHash: string): Promise<{ action: "added" | "removed" }> {
+    // 光创建表（如果不存在）
+    await this.db.run(sql`CREATE TABLE IF NOT EXISTS reactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_slug TEXT NOT NULL,
+      type TEXT NOT NULL,
+      ip_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(post_slug, type, ip_hash)
+    )`);
+    const [existing] = await this.db
+      .select()
+      .from(reactions)
+      .where(sql`${reactions.postSlug} = ${postSlug} AND ${reactions.type} = ${type} AND ${reactions.ipHash} = ${ipHash}`)
+      .limit(1);
+    if (existing) {
+      await this.db.delete(reactions).where(eq(reactions.id, existing.id));
+      return { action: "removed" };
+    }
+    await this.db.insert(reactions).values({ postSlug, type, ipHash });
+    return { action: "added" };
   }
 }

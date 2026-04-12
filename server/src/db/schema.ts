@@ -77,3 +77,14 @@ export const comments = sqliteTable("comments", {
     .notNull()
     .default(sql`(datetime('now'))`),
 });
+
+/* ── 表情反应表 ────────────────────────────── */
+export const reactions = sqliteTable("reactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  postSlug: text("post_slug").notNull(),
+  type: text("type").notNull(), // like, heart, celebrate, think
+  ipHash: text("ip_hash").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});

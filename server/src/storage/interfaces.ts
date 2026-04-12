@@ -202,6 +202,10 @@ export interface IDatabase {
 
   /* 系列 */
   getSeriesPosts(seriesSlug: string): Promise<{ slug: string; title: string; seriesOrder: number }[]>;
+
+  /* 表情反应 */
+  getReactions(postSlug: string): Promise<Record<string, number>>;
+  toggleReaction(postSlug: string, type: string, ipHash: string): Promise<{ action: "added" | "removed" }>;
 }
 
 /* ── 对象存储抽象接口 ─────────────────────── */

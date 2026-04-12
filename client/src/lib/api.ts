@@ -53,6 +53,21 @@ export async function fetchSeriesPosts(seriesSlug: string): Promise<SeriesPost[]
   return res.json();
 }
 
+export async function fetchReactions(slug: string): Promise<Record<string, number>> {
+  const res = await fetch(`${API_BASE}/api/posts/${slug}/reactions`);
+  if (!res.ok) return {};
+  return res.json();
+}
+
+export async function toggleReaction(slug: string, type: string): Promise<{ action: string; reactions: Record<string, number> }> {
+  const res = await fetch(`${API_BASE}/api/posts/${slug}/reactions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type }),
+  });
+  return res.json();
+}
+
 /* ── 认证 ──────────────────────────────────── */
 export function getToken(): string | null {
   return localStorage.getItem("monolith_token");

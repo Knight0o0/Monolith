@@ -145,6 +145,38 @@ app.post("/api/posts/:slug/comments", async (c) => {
   }
 });
 
+// 获取文章表情反应统计
+app.get("/api/posts/:slug/reactions", async (c) => {
+  const slug = c.req.param("slug");
+  const db = c.get("db");
+  const reactions = await db.getReactions(slug);
+  return c.json(reactions);
+});
+
+// 切换表情反应（无需登录，IP 去重）
+app.post("/api/posts/:slug/reactions", async (c) => {
+  const slug = c.req.param("slug");
+  const body = await c.req.json<{ type: string }>();
+
+  const validTypes = ["like", "heart", "celebrate", "think"];
+  if (!validTypes.includes(body.type)) {
+    return c.json({ error: "无效的反应类型" }, 400);
+  }
+
+  // IP hash 去重
+  const ip = c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For") || "unknown";
+  const encoder = new TextEncoder();
+  const data = encoder.encode(ip + ":monolith-reaction-salt");
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const ipHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+  const db = c.get("db");
+  const result = await db.toggleReaction(slug, body.type, ipHash);
+  const reactions = await db.getReactions(slug);
+  return c.json({ ...result, reactions });
+});
+
 // 公开：获取前台需要的设置（不含敏感信息）
 app.get("/api/settings/public", async (c) => {
   const db = c.get("db");

@@ -7,7 +7,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, desc, sql } from "drizzle-orm";
-import { pgPosts, pgTags, pgPostTags, pgPages, pgSettings, pgComments } from "../../db/schema-pg";
+import { pgPosts, pgTags, pgPostTags, pgPages, pgSettings, pgComments, pgReactions } from "../../db/schema-pg";
 import type {
   IDatabase, Post, PostSummary, Tag, Page, PageSummary,
   CreatePostInput, UpdatePostInput, UpsertPageInput,
@@ -803,5 +803,43 @@ export class PostgresAdapter implements IDatabase {
       ORDER BY series_order ASC
     `;
     return rows.map(r => ({ slug: r.slug as string, title: r.title as string, seriesOrder: (r.series_order as number) ?? 0 }));
+  }
+
+  async getReactions(postSlug: string): Promise<Record<string, number>> {
+    const rows = await this.client`
+      SELECT type, COUNT(*)::int as count FROM reactions
+      WHERE post_slug = ${postSlug}
+      GROUP BY type
+    `;
+    const result: Record<string, number> = {};
+    for (const row of rows) {
+      result[row.type as string] = row.count as number;
+    }
+    return result;
+  }
+
+  async toggleReaction(postSlug: string, type: string, ipHash: string): Promise<{ action: "added" | "removed" }> {
+    // 确保表存在
+    await this.client`
+      CREATE TABLE IF NOT EXISTS reactions (
+        id SERIAL PRIMARY KEY,
+        post_slug TEXT NOT NULL,
+        type TEXT NOT NULL,
+        ip_hash TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(post_slug, type, ip_hash)
+      )
+    `;
+    const [existing] = await this.client`
+      SELECT id FROM reactions
+      WHERE post_slug = ${postSlug} AND type = ${type} AND ip_hash = ${ipHash}
+      LIMIT 1
+    `;
+    if (existing) {
+      await this.client`DELETE FROM reactions WHERE id = ${existing.id}`;
+      return { action: "removed" };
+    }
+    await this.client`INSERT INTO reactions (post_slug, type, ip_hash) VALUES (${postSlug}, ${type}, ${ipHash})`;
+    return { action: "added" };
   }
 }

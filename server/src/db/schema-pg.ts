@@ -78,3 +78,12 @@ export const pgComments = pgTable("comments", {
   approved: boolean("approved").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/* ── 表情反应表 ────────────────────────────── */
+export const pgReactions = pgTable("reactions", {
+  id: serial("id").primaryKey(),
+  postSlug: text("post_slug").notNull(),
+  type: text("type").notNull(),
+  ipHash: text("ip_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
