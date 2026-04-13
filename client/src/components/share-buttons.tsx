@@ -1,5 +1,5 @@
 import { Link2, Share2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // 自定义 SVG Icons 因为 Lucide移除了品牌图标
 const TwitterIcon = ({ className }: { className?: string }) => (
@@ -22,14 +22,22 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ title, url, className = "" }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<number | null>(null);
   const shareUrl = url || (typeof window !== "undefined" ? window.location.href : "");
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
     }).catch(console.error);
   };
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const handleNativeShare = () => {
     if (navigator.share) {

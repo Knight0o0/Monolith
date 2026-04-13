@@ -50,7 +50,10 @@ export function PostReactions({ slug }: PostReactionsProps) {
 
     setInFlight(prev => new Set(prev).add(type));
     setAnimating(type);
-    setTimeout(() => setAnimating(null), 600);
+    const clickedType = type;
+    setTimeout(() => {
+      setAnimating((prev) => (prev === clickedType ? null : prev));
+    }, 600);
 
     try {
       const requestSlug = slug;

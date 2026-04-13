@@ -82,10 +82,12 @@ export function AdminDashboard() {
   };
 
   const toggleSelect = (slug: string) => {
-    const next = new Set(selectedSlugs);
-    if (next.has(slug)) next.delete(slug);
-    else next.add(slug);
-    setSelectedSlugs(next);
+    setSelectedSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
   };
 
   const handleBatchOperate = async (action: "publish" | "unpublish" | "delete") => {

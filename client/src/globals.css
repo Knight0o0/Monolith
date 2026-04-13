@@ -1517,13 +1517,13 @@
 }
 
 /* 亮色模式阅读退出按钮 */
-:root:not(.dark) .reading-mode-exit-fab {
+[data-theme="light"] .reading-mode-exit-fab {
   border-color: oklch(0.8 0 0 / 0.3);
   background: oklch(0.98 0 0 / 0.9);
   color: oklch(0.4 0 0);
 }
 
-:root:not(.dark) .reading-mode-exit-fab:hover {
+[data-theme="light"] .reading-mode-exit-fab:hover {
   background: oklch(0.95 0 0 / 0.95);
   color: oklch(0.15 0 0);
   border-color: oklch(0.6 0 0 / 0.3);
