@@ -49,8 +49,14 @@ export function registerCommentTools(server: McpServer) {
   server.tool(
     "delete_comment",
     "⚠️ 【高危操作】永久删除一条评论，此操作不可逆！调用前请确认。",
-    { id: z.number().describe("评论 ID") },
-    async ({ id }) => {
+    { 
+      id: z.number().describe("评论 ID"),
+      confirm: z.enum(["yes"]).describe("必须输入 'yes' 确认高危操作")
+    },
+    async ({ id, confirm }) => {
+      if (confirm !== "yes") {
+        return { content: [{ type: "text" as const, text: "❌ 操作已取消：未确认高危操作。" }], isError: true };
+      }
       const result = await apiRequest(`/api/admin/comments/${id}`, {
         method: "DELETE",
       });

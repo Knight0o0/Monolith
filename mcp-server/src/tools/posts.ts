@@ -29,7 +29,7 @@ export function registerPostTools(server: McpServer) {
     "获取指定 slug 的文章完整内容（含 Markdown 正文、元信息）",
     { slug: z.string().describe("文章的 URL 标识符 (slug)") },
     async ({ slug }) => {
-      const post = await apiRequest(`/api/posts/${slug}`, { auth: false });
+      const post = await apiRequest(`/api/posts/${encodeURIComponent(slug)}`, { auth: false });
       return {
         content: [{
           type: "text" as const,
@@ -111,7 +111,7 @@ export function registerPostTools(server: McpServer) {
       publishedAt: z.string().optional().describe("定时发布时间"),
     },
     async ({ slug, ...updates }) => {
-      const result = await apiRequest(`/api/admin/posts/${slug}`, {
+      const result = await apiRequest(`/api/admin/posts/${encodeURIComponent(slug)}`, {
         method: "PUT",
         body: updates,
       });
@@ -128,9 +128,15 @@ export function registerPostTools(server: McpServer) {
   server.tool(
     "delete_post",
     "⚠️ 【高危操作】永久删除指定 slug 的文章，此操作不可逆！调用前请务必向主人确认。",
-    { slug: z.string().describe("要删除的文章 slug") },
-    async ({ slug }) => {
-      const result = await apiRequest(`/api/admin/posts/${slug}`, {
+    { 
+      slug: z.string().describe("要删除的文章 slug"),
+      confirm: z.enum(["yes"]).describe("必须输入 'yes' 确认高危操作")
+    },
+    async ({ slug, confirm }) => {
+      if (confirm !== "yes") {
+        return { content: [{ type: "text" as const, text: "❌ 操作已取消：未确认高危操作。" }], isError: true };
+      }
+      const result = await apiRequest(`/api/admin/posts/${encodeURIComponent(slug)}`, {
         method: "DELETE",
       });
       return {
@@ -149,8 +155,12 @@ export function registerPostTools(server: McpServer) {
     {
       slugs: z.array(z.string()).max(10).describe("文章 slug 列表（最多 10 个）"),
       action: z.enum(["publish", "draft", "delete"]).describe("批量动作"),
+      confirm: z.enum(["yes"]).describe("如果是 delete 动作，必须输入 'yes' 确认。其他动作可选。")
     },
-    async ({ slugs, action }) => {
+    async ({ slugs, action, confirm }) => {
+      if (action === "delete" && confirm !== "yes") {
+        return { content: [{ type: "text" as const, text: "❌ 操作已取消：批量删除必须确认高危操作。" }], isError: true };
+      }
       const result = await apiRequest("/api/admin/posts/batch", {
         method: "POST",
         body: { slugs, action },
@@ -170,7 +180,7 @@ export function registerPostTools(server: McpServer) {
     "查看指定文章的历史修改版本列表",
     { slug: z.string().describe("文章 slug") },
     async ({ slug }) => {
-      const versions = await apiRequest(`/api/admin/posts/${slug}/versions`);
+      const versions = await apiRequest(`/api/admin/posts/${encodeURIComponent(slug)}/versions`);
       return {
         content: [{
           type: "text" as const,

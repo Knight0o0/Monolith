@@ -30,7 +30,7 @@ export function registerSettingsTools(server: McpServer) {
     {
       site_name: z.string().optional().describe("站点名称"),
       site_description: z.string().optional().describe("站点描述"),
-      posts_per_page: z.number().optional().describe("每页文章数"),
+      posts_per_page: z.number().int().min(1).max(100).optional().describe("每页文章数"),
       comments_require_approval: z.boolean().optional().describe("评论是否需要审核"),
       custom_header: z.string().optional().describe("注入到 <head> 中的自定义 HTML/JS"),
       custom_footer: z.string().optional().describe("注入到页面底部的自定义 HTML/JS"),

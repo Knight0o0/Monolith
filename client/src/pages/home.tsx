@@ -131,7 +131,8 @@ export function HomePage() {
 
   // 计算标签频次并按热度排序
   const tagCounts = posts.flatMap((p) => p.tags).reduce<Record<string, number>>((acc, t) => {
-    acc[t] = (acc[t] || 0) + 1;
+    if (t === "__proto__" || t === "constructor") return acc;
+    acc[t] = Object.prototype.hasOwnProperty.call(acc, t) ? acc[t] + 1 : 1;
     return acc;
   }, {});
   const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);

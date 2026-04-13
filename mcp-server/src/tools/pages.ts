@@ -29,7 +29,7 @@ export function registerPageTools(server: McpServer) {
     "获取指定 slug 的独立页面完整内容",
     { slug: z.string().describe("页面 slug") },
     async ({ slug }) => {
-      const page = await apiRequest(`/api/admin/pages/${slug}`);
+      const page = await apiRequest(`/api/admin/pages/${encodeURIComponent(slug)}`);
       return {
         content: [{
           type: "text" as const,
@@ -69,8 +69,14 @@ export function registerPageTools(server: McpServer) {
   server.tool(
     "delete_page",
     "⚠️ 【高危操作】永久删除指定的独立页面，此操作不可逆！",
-    { slug: z.string().describe("要删除的页面 slug") },
-    async ({ slug }) => {
+    { 
+      slug: z.string().describe("要删除的页面 slug"),
+      confirm: z.enum(["yes"]).describe("必须输入 'yes' 确认高危操作")
+    },
+    async ({ slug, confirm }) => {
+      if (confirm !== "yes") {
+        return { content: [{ type: "text" as const, text: "❌ 操作已取消：未确认高危操作。" }], isError: true };
+      }
       const result = await apiRequest("/api/admin/pages/delete", {
         method: "POST",
         body: { slug },

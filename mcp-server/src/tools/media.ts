@@ -48,30 +48,43 @@ export function registerMediaTools(server: McpServer) {
       const formData = new FormData();
       formData.append("file", blob, filename);
 
-      const res = await fetch(`${apiUrl}/api/admin/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 媒体上传 30s 超时
 
-      if (!res.ok) {
-        const errorText = await res.text();
+      try {
+        const res = await fetch(`${apiUrl}/api/admin/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          return {
+            content: [{
+              type: "text" as const,
+              text: `❌ 上传失败 (${res.status}): ${errorText}`,
+            }],
+            isError: true,
+          };
+        }
+
+        const result = await res.json();
         return {
           content: [{
             type: "text" as const,
-            text: `❌ 上传失败 (${res.status}): ${errorText}`,
+            text: `✅ 文件 "${filename}" 上传成功：${JSON.stringify(result, null, 2)}`,
           }],
-          isError: true,
         };
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          return { content: [{ type: "text" as const, text: "❌ 上传超时 (30s)" }], isError: true };
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      const result = await res.json();
-      return {
-        content: [{
-          type: "text" as const,
-          text: `✅ 文件 "${filename}" 上传成功：${JSON.stringify(result, null, 2)}`,
-        }],
-      };
     }
   );
 
@@ -79,9 +92,15 @@ export function registerMediaTools(server: McpServer) {
   server.tool(
     "delete_media",
     "⚠️ 【高危操作】删除对象存储中的指定文件，此操作不可逆！",
-    { key: z.string().describe("文件的存储 Key（路径）") },
-    async ({ key }) => {
-      const result = await apiRequest(`/api/admin/media/${key}`, {
+    { 
+      key: z.string().describe("文件的存储 Key（路径）"),
+      confirm: z.enum(["yes"]).describe("必须输入 'yes' 确认高危操作")
+    },
+    async ({ key, confirm }) => {
+      if (confirm !== "yes") {
+        return { content: [{ type: "text" as const, text: "❌ 操作已取消：未确认高危操作。" }], isError: true };
+      }
+      const result = await apiRequest(`/api/admin/media/${encodeURIComponent(key)}`, {
         method: "DELETE",
       });
       return {

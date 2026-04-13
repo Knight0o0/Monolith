@@ -76,7 +76,14 @@ export function registerBackupTools(server: McpServer) {
         await apiRequest("/api/admin/backup/r2", { method: "POST" });
         console.error("[Monolith MCP] 安全快照已创建。");
       } catch (e) {
-        console.error("[Monolith MCP] 安全快照创建失败，继续恢复操作...", e);
+        console.error("[Monolith MCP] 安全快照创建失败", e);
+        return {
+          content: [{
+            type: "text" as const,
+            text: "❌ 安全快照创建失败，为防止数据丢失，已终止恢复操作。",
+          }],
+          isError: true,
+        };
       }
 
       // 执行恢复

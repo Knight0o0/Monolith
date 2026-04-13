@@ -221,7 +221,7 @@ renderer.table = function (token: any) {
       const align = cell.align ? ` style="text-align:${cell.align}"` : "";
       const cellText = cell.tokens
         ? this.parser.parseInline(cell.tokens)
-        : (typeof cell.text === "string" ? cell.text : String(cell));
+        : (typeof cell.text === "string" ? cell.text : "");
       return `<th${align}>${cellText}</th>`;
     }).join("") + "</tr>";
   } else if (typeof token.header === "string") {
@@ -236,7 +236,7 @@ renderer.table = function (token: any) {
         const align = cell.align ? ` style="text-align:${cell.align}"` : "";
         const cellText = cell.tokens
           ? this.parser.parseInline(cell.tokens)
-          : (typeof cell.text === "string" ? cell.text : String(cell));
+          : (typeof cell.text === "string" ? cell.text : "");
         return `<td${align}>${cellText}</td>`;
       }).join("") + "</tr>";
     }).join("");
