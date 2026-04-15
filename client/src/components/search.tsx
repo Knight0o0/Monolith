@@ -16,6 +16,47 @@ type SearchResult = {
 
 const API_BASE = "";
 
+function findSelectedResult(results: SearchResult[], selectedIndex: number) {
+  if (selectedIndex < 0) return undefined;
+  let currentIndex = 0;
+  for (const result of results) {
+    if (currentIndex === selectedIndex) {
+      return result;
+    }
+    currentIndex += 1;
+  }
+  return undefined;
+}
+
+function splitByQuery(text: string, query: string) {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  if (!normalizedQuery) {
+    return [{ text, matched: false }];
+  }
+
+  const segments: Array<{ text: string; matched: boolean }> = [];
+  const normalizedText = text.toLocaleLowerCase();
+  let cursor = 0;
+
+  while (cursor < text.length) {
+    const matchIndex = normalizedText.indexOf(normalizedQuery, cursor);
+    if (matchIndex === -1) {
+      segments.push({ text: text.slice(cursor), matched: false });
+      break;
+    }
+
+    if (matchIndex > cursor) {
+      segments.push({ text: text.slice(cursor, matchIndex), matched: false });
+    }
+
+    const matchEnd = matchIndex + normalizedQuery.length;
+    segments.push({ text: text.slice(matchIndex, matchEnd), matched: true });
+    cursor = matchEnd;
+  }
+
+  return segments.length > 0 ? segments : [{ text, matched: false }];
+}
+
 export function SearchOverlay() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -87,8 +128,7 @@ export function SearchOverlay() {
       e.preventDefault();
       setSelectedIndex((prev) => Math.max(prev - 1, 0));
     } else if (e.key === "Enter") {
-      // eslint-disable-next-line security/detect-object-injection
-      const selected = results[selectedIndex];
+      const selected = findSelectedResult(results, selectedIndex);
       if (selected) {
         setOpen(false);
         window.location.href = `/posts/${selected.slug}`;
@@ -99,16 +139,14 @@ export function SearchOverlay() {
   // 高亮关键词
   const highlightText = (text: string, q: string) => {
     if (!q.trim()) return text;
-    // eslint-disable-next-line security/detect-non-literal-regexp
-    const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
-    const parts = text.split(regex);
+    const parts = splitByQuery(text, q);
     return parts.map((part, i) =>
-      regex.test(part) ? (
+      part.matched ? (
         <mark key={i} className="bg-amber-500/30 text-foreground rounded-sm px-[2px]">
-          {part}
+          {part.text}
         </mark>
       ) : (
-        part
+        part.text
       )
     );
   };

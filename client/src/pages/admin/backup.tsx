@@ -599,12 +599,11 @@ function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: s
 function ActionCard({ icon: Icon, color, label, desc, loading, onClick, disabled }: {
   icon: React.ElementType; color: string; label: string; desc: string; loading: boolean; onClick: () => void; disabled: boolean;
 }) {
-  const toneMap: Record<string, { bg: string; text: string }> = {
-    orange: { bg: "bg-orange-500/10", text: "text-orange-400" },
-    blue: { bg: "bg-blue-500/10", text: "text-blue-400" },
-    emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400" },
-  };
-  const tone = toneMap[color] || toneMap.blue;
+  const tone = color === "orange"
+    ? { bg: "bg-orange-500/10", text: "text-orange-400" }
+    : color === "emerald"
+      ? { bg: "bg-emerald-500/10", text: "text-emerald-400" }
+      : { bg: "bg-blue-500/10", text: "text-blue-400" };
 
   return (
     <button onClick={onClick} disabled={disabled}

@@ -108,6 +108,10 @@ function parseYamlFrontmatter(yaml: string): FrontmatterData {
 
   while (i < lines.length) {
     const line = lines[i];
+    if (typeof line !== "string") {
+      i++;
+      continue;
+    }
     const keyMatch = line.match(/^(\w[\w-]*):\s*(.*)/);
 
     if (!keyMatch) {
@@ -123,9 +127,11 @@ function parseYamlFrontmatter(yaml: string): FrontmatterData {
       // 检测 block array
       const arrayItems: string[] = [];
       let j = i + 1;
-      while (j < lines.length && /^\s+-\s+/.test(lines[j])) {
-        arrayItems.push(lines[j].replace(/^\s+-\s+/, "").trim());
+      let nextLine = lines[j];
+      while (typeof nextLine === "string" && /^\s+-\s+/.test(nextLine)) {
+        arrayItems.push(nextLine.replace(/^\s+-\s+/, "").trim());
         j++;
+        nextLine = lines[j];
       }
       if (arrayItems.length > 0) {
         assignArrayField(result, key, arrayItems);

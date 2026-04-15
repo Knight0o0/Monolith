@@ -127,7 +127,6 @@ renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
     const isHighlighted = highlightLines.has(lineNum);
 
     // diff 高亮：检测原始文本行前缀
-    // eslint-disable-next-line security/detect-object-injection
     const rawLine = rawLines[i] || "";
     let diffClass = "";
     if (isDiff) {
@@ -171,18 +170,34 @@ renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
 // 图片/视频：懒加载 + 圆角 + 视频解析
 renderer.image = ({ href, title, text }: { href: string; title?: string | null; text: string }) => {
   const titleAttr = title ? ` title="${escapeHtml(title)}"` : "";
+
+  let normalizedHref = href;
+  try {
+    normalizedHref = new URL(href, "https://monolith.local").toString();
+  } catch {
+    normalizedHref = href;
+  }
+
+  let mediaExtension = "";
+  try {
+    const videoUrl = new URL(normalizedHref, "https://monolith.local");
+    const lastSegment = videoUrl.pathname.split("/").filter(Boolean).pop() || "";
+    const dotIndex = lastSegment.lastIndexOf(".");
+    mediaExtension = dotIndex >= 0 ? lastSegment.slice(dotIndex + 1).toLowerCase() : "";
+  } catch {
+    mediaExtension = "";
+  }
   
   // 1. 直链视频支持
-  // eslint-disable-next-line security/detect-unsafe-regex
-  if (href.match(/\.(mp4|webm|ogg|mov)(?:\?.*)?$/i)) {
+  if (["mp4", "webm", "ogg", "mov"].includes(mediaExtension)) {
     return `<figure class="md-figure md-video">
-      <video src="${href}" controls playsinline preload="metadata" class="w-full rounded-lg border border-border/20 shadow-lg bg-black/5"></video>
+      <video src="${normalizedHref}" controls playsinline preload="metadata" class="w-full rounded-lg border border-border/20 shadow-lg bg-black/5"></video>
       ${text ? `<figcaption>${escapeHtml(text)}</figcaption>` : ""}
     </figure>`;
   }
 
   // 2. 哔哩哔哩 (Bilibili) 视频支持解析
-  const bpxMatch = href.match(/bilibili\.com\/video\/([a-zA-Z0-9]+)/i);
+  const bpxMatch = normalizedHref.match(/bilibili\.com\/video\/([a-zA-Z0-9]+)/i);
   if (bpxMatch) {
     const bvid = bpxMatch[1];
     return `<figure class="md-figure md-video">
@@ -194,7 +209,7 @@ renderer.image = ({ href, title, text }: { href: string; title?: string | null; 
   }
 
   // 3. YouTube 视频支持解析
-  const ytMatch = href.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  const ytMatch = normalizedHref.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
   if (ytMatch) {
     const ytid = ytMatch[1];
     return `<figure class="md-figure md-video">
@@ -206,7 +221,7 @@ renderer.image = ({ href, title, text }: { href: string; title?: string | null; 
   }
 
   // 默认图片渲染 — 懒加载 + 渐进淡入
-  return `<figure class="md-figure"><img src="${href}" alt="${escapeHtml(text)}" loading="lazy" decoding="async" data-lazy-img${titleAttr} class="lazy-img"/>${text ? `<figcaption>${escapeHtml(text)}</figcaption>` : ""}</figure>`;
+  return `<figure class="md-figure"><img src="${normalizedHref}" alt="${escapeHtml(text)}" loading="lazy" decoding="async" data-lazy-img${titleAttr} class="lazy-img"/>${text ? `<figcaption>${escapeHtml(text)}</figcaption>` : ""}</figure>`;
 };
 
 // 表格：响应式包裹（兼容 marked v15+ 的 token 结构）
