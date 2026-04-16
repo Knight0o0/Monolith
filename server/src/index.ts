@@ -94,6 +94,7 @@ app.get("/api/health", async (c) => {
 // 获取文章列表（仅已发布）
 app.get("/api/posts", async (c) => {
   const db = c.get("db");
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=600");
   const result = await db.getPublishedPosts();
   return c.json(result);
 });
@@ -116,6 +117,7 @@ app.get("/api/posts/:slug", async (c) => {
   const db = c.get("db");
   const post = await db.getPostBySlug(slug);
   if (!post) return c.json({ error: "文章未找到" }, 404);
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=600");
 
   // 异步递增浏览量 + 记录日访问量——不阻塞响应
   try {

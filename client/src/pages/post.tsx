@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "wouter";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,15 @@ import { ShareButtons } from "@/components/share-buttons";
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" });
+}
+
+const renderedPostCache = new Map<string, {
+  htmlContent: string;
+  headings: { id: string; text: string; level: number }[];
+}>();
+
+function getRenderedPostCacheKey(post: Pick<Post, "slug" | "updatedAt">) {
+  return `${post.slug}:${post.updatedAt}`;
 }
 
 export function PostPage() {
@@ -84,15 +93,23 @@ export function PostPage() {
       setHtmlContent("");
       return;
     }
-    
-    // 利用 setTimeout 将密集的 Markdown 解析与语法高亮推迟到下一个事件循环
-    // 从而让浏览器能立刻绘制页面基本框架和动画，大幅提升用户感知速度
-    const timer = setTimeout(() => {
-      setHeadings(extractHeadings(post.content));
-      setHtmlContent(renderMarkdown(post.content));
-    }, 10);
-    
-    return () => clearTimeout(timer);
+
+    const cacheKey = getRenderedPostCacheKey(post);
+    const cached = renderedPostCache.get(cacheKey);
+    if (cached) {
+      setHeadings(cached.headings);
+      setHtmlContent(cached.htmlContent);
+      return;
+    }
+
+    const nextHeadings = extractHeadings(post.content);
+    const nextHtmlContent = renderMarkdown(post.content);
+    renderedPostCache.set(cacheKey, {
+      headings: nextHeadings,
+      htmlContent: nextHtmlContent,
+    });
+    setHeadings(nextHeadings);
+    setHtmlContent(nextHtmlContent);
   }, [post]);
 
   // 图片渐进淡入（Intersection Observer）

@@ -171,6 +171,25 @@ export class PostgresAdapter implements IDatabase {
     }
   }
 
+  private async getPostTagsMap(postIds: number[]): Promise<Map<number, string[]>> {
+    const tagMap = new Map<number, string[]>();
+    if (postIds.length === 0) return tagMap;
+
+    const rows = await this.db
+      .select({ postId: pgPostTags.postId, name: pgTags.name })
+      .from(pgPostTags)
+      .innerJoin(pgTags, eq(pgPostTags.tagId, pgTags.id))
+      .where(inArray(pgPostTags.postId, postIds));
+
+    for (const row of rows) {
+      const list = tagMap.get(row.postId) || [];
+      list.push(row.name);
+      tagMap.set(row.postId, list);
+    }
+
+    return tagMap;
+  }
+
   /** 将 PG timestamp 转为 ISO 字符串 */
   private ts(d: Date | string | null): string {
     if (!d) return new Date().toISOString();
@@ -199,21 +218,21 @@ export class PostgresAdapter implements IDatabase {
       )
       .orderBy(desc(pgPosts.pinned), desc(pgPosts.createdAt));
 
-    return Promise.all(
-      allPosts.map(async (post) => ({
-        id: post.id,
-        slug: post.slug,
-        title: post.title,
-        excerpt: post.excerpt || "",
-        coverColor: post.coverColor || "",
-        createdAt: this.ts(post.createdAt),
-        tags: await this.getPostTags(post.id),
-        pinned: post.pinned,
-        publishAt: this.ts(post.publishAt),
-        seriesSlug: post.seriesSlug || null,
-        category: post.category || "",
-      }))
-    );
+    const tagMap = await this.getPostTagsMap(allPosts.map((post) => post.id));
+
+    return allPosts.map((post) => ({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      excerpt: post.excerpt || "",
+      coverColor: post.coverColor || "",
+      createdAt: this.ts(post.createdAt),
+      tags: tagMap.get(post.id) || [],
+      pinned: post.pinned,
+      publishAt: this.ts(post.publishAt),
+      seriesSlug: post.seriesSlug || null,
+      category: post.category || "",
+    }));
   }
 
   async getAllPosts(): Promise<(Post & { tags: string[] })[]> {
@@ -222,27 +241,27 @@ export class PostgresAdapter implements IDatabase {
       .from(pgPosts)
       .orderBy(desc(pgPosts.createdAt));
 
-    return Promise.all(
-      allPosts.map(async (post) => ({
-        id: post.id,
-        slug: post.slug,
-        title: post.title,
-        content: post.content,
-        excerpt: post.excerpt || "",
-        coverColor: post.coverColor || "",
-        published: post.published,
-        listed: post.listed,
-        createdAt: this.ts(post.createdAt),
-        updatedAt: this.ts(post.updatedAt),
-        viewCount: post.viewCount ?? 0,
-        pinned: post.pinned,
-        publishAt: this.ts(post.publishAt),
-        seriesSlug: post.seriesSlug || null,
-        category: post.category || "",
-        seriesOrder: post.seriesOrder ?? 0,
-        tags: await this.getPostTags(post.id),
-      }))
-    );
+    const tagMap = await this.getPostTagsMap(allPosts.map((post) => post.id));
+
+    return allPosts.map((post) => ({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      content: post.content,
+      excerpt: post.excerpt || "",
+      coverColor: post.coverColor || "",
+      published: post.published,
+      listed: post.listed,
+      createdAt: this.ts(post.createdAt),
+      updatedAt: this.ts(post.updatedAt),
+      viewCount: post.viewCount ?? 0,
+      pinned: post.pinned,
+      publishAt: this.ts(post.publishAt),
+      seriesSlug: post.seriesSlug || null,
+      category: post.category || "",
+      seriesOrder: post.seriesOrder ?? 0,
+      tags: tagMap.get(post.id) || [],
+    }));
   }
 
   async getPostBySlug(slug: string): Promise<(Post & { tags: string[] }) | null> {

@@ -3,6 +3,43 @@
 // 线上构建时可通过设置 .env 的 VITE_API_URL 指向真实部署的 worker url 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
+type PublicCacheEntry<T> = {
+  expiresAt: number;
+  value: T;
+};
+
+const publicCache = new Map<string, PublicCacheEntry<unknown>>();
+const inflightRequests = new Map<string, Promise<unknown>>();
+
+async function fetchJsonWithCache<T>(path: string, ttlMs: number): Promise<T> {
+  const now = Date.now();
+  const cached = publicCache.get(path) as PublicCacheEntry<T> | undefined;
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  const inflight = inflightRequests.get(path) as Promise<T> | undefined;
+  if (inflight) {
+    return inflight;
+  }
+
+  const request = fetch(`${API_BASE}${path}`)
+    .then(async (res) => {
+      if (!res.ok) {
+        throw new Error(`Request failed: ${path}`);
+      }
+      const value = await res.json() as T;
+      publicCache.set(path, { value, expiresAt: Date.now() + ttlMs });
+      return value;
+    })
+    .finally(() => {
+      inflightRequests.delete(path);
+    });
+
+  inflightRequests.set(path, request);
+  return request;
+}
+
 /* ── 类型 ──────────────────────────────────── */
 export type PostMeta = {
   id: number;
@@ -29,15 +66,11 @@ export type Post = PostMeta & {
 
 /* ── 公开 API ──────────────────────────────── */
 export async function fetchPosts(): Promise<PostMeta[]> {
-  const res = await fetch(`${API_BASE}/api/posts`);
-  if (!res.ok) throw new Error("获取文章列表失败");
-  return res.json();
+  return fetchJsonWithCache<PostMeta[]>("/api/posts", 60_000);
 }
 
 export async function fetchPost(slug: string): Promise<Post> {
-  const res = await fetch(`${API_BASE}/api/posts/${slug}`);
-  if (!res.ok) throw new Error("获取文章失败");
-  return res.json();
+  return fetchJsonWithCache<Post>(`/api/posts/${slug}`, 60_000);
 }
 
 export async function fetchTags(): Promise<{ id: number; name: string }[]> {
@@ -49,9 +82,11 @@ export async function fetchTags(): Promise<{ id: number; name: string }[]> {
 export type CategoryInfo = { name: string; count: number };
 
 export async function fetchCategories(): Promise<CategoryInfo[]> {
-  const res = await fetch(`${API_BASE}/api/categories`);
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    return await fetchJsonWithCache<CategoryInfo[]>("/api/categories", 60_000);
+  } catch {
+    return [];
+  }
 }
 
 export type SeriesPost = { slug: string; title: string; seriesOrder: number };

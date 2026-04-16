@@ -7,6 +7,8 @@ import DOMPurify from "dompurify";
 import javascript from "highlight.js/lib/languages/javascript";
 import typescript from "highlight.js/lib/languages/typescript";
 import css from "highlight.js/lib/languages/css";
+import c from "highlight.js/lib/languages/c";
+import cpp from "highlight.js/lib/languages/cpp";
 import xml from "highlight.js/lib/languages/xml";
 import json from "highlight.js/lib/languages/json";
 import bash from "highlight.js/lib/languages/bash";
@@ -23,6 +25,13 @@ hljs.registerLanguage("js", javascript);
 hljs.registerLanguage("typescript", typescript);
 hljs.registerLanguage("ts", typescript);
 hljs.registerLanguage("css", css);
+hljs.registerLanguage("c", c);
+hljs.registerLanguage("h", c);
+hljs.registerLanguage("cpp", cpp);
+hljs.registerLanguage("c++", cpp);
+hljs.registerLanguage("cc", cpp);
+hljs.registerLanguage("cxx", cpp);
+hljs.registerLanguage("hpp", cpp);
 hljs.registerLanguage("html", xml);
 hljs.registerLanguage("xml", xml);
 hljs.registerLanguage("json", json);
@@ -73,6 +82,7 @@ renderer.heading = function ({ text, depth, tokens }: { text: string; depth: num
 renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
   // 解析语言标识和元信息，如 ts{1,3-5} 或 ts title="app.ts" 或 ts{1,3-5} title="app.ts"
   let language = "";
+  let displayLanguage = "code";
   let title = "";
   let highlightLines = new Set<number>();
 
@@ -103,7 +113,10 @@ renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
       .replace(/title=["'][^"']+["']/, "")
       .replace(/title=[\w./-]+/, "")
       .trim();
-    language = pureLang && hljs.getLanguage(pureLang) ? pureLang : "";
+    if (pureLang) {
+      displayLanguage = pureLang;
+      language = hljs.getLanguage(pureLang) ? pureLang : "";
+    }
   }
 
   // 检测是否为 diff 语言（特殊高亮 +/- 行）
@@ -141,7 +154,7 @@ renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
   }).join("\n");
 
 
-  const langLabel = language ? `<span class="code-lang">${language}</span>` : `<span class="code-lang">code</span>`;
+  const langLabel = `<span class="code-lang">${escapeHtml(language || displayLanguage)}</span>`;
 
   const copyIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
 

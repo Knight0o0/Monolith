@@ -38,6 +38,25 @@ export class TursoAdapter implements IDatabase {
     return rows.map((r) => r.name);
   }
 
+  private async getPostTagsMap(postIds: number[]): Promise<Map<number, string[]>> {
+    const tagMap = new Map<number, string[]>();
+    if (postIds.length === 0) return tagMap;
+
+    const rows = await this.db
+      .select({ postId: postTags.postId, name: tags.name })
+      .from(postTags)
+      .innerJoin(tags, eq(postTags.tagId, tags.id))
+      .where(inArray(postTags.postId, postIds));
+
+    for (const row of rows) {
+      const list = tagMap.get(row.postId) || [];
+      list.push(row.name);
+      tagMap.set(row.postId, list);
+    }
+
+    return tagMap;
+  }
+
   private async syncPostTags(postId: number, tagNames: string[]): Promise<void> {
     await this.db.delete(postTags).where(eq(postTags.postId, postId));
     for (const tagName of tagNames) {
@@ -182,21 +201,21 @@ export class TursoAdapter implements IDatabase {
       )
       .orderBy(desc(posts.pinned), desc(posts.createdAt));
 
-    return Promise.all(
-      allPosts.map(async (post) => ({
-        id: post.id,
-        slug: post.slug,
-        title: post.title,
-        excerpt: post.excerpt || "",
-        coverColor: post.coverColor || "",
-        createdAt: post.createdAt,
-        tags: await this.getPostTags(post.id),
-        pinned: post.pinned,
-        publishAt: post.publishAt,
-        seriesSlug: post.seriesSlug || null,
-        category: post.category || "",
-      }))
-    );
+    const tagMap = await this.getPostTagsMap(allPosts.map((post) => post.id));
+
+    return allPosts.map((post) => ({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      excerpt: post.excerpt || "",
+      coverColor: post.coverColor || "",
+      createdAt: post.createdAt,
+      tags: tagMap.get(post.id) || [],
+      pinned: post.pinned,
+      publishAt: post.publishAt,
+      seriesSlug: post.seriesSlug || null,
+      category: post.category || "",
+    }));
   }
 
   async getAllPosts(): Promise<(Post & { tags: string[] })[]> {
@@ -205,27 +224,27 @@ export class TursoAdapter implements IDatabase {
       .from(posts)
       .orderBy(desc(posts.createdAt));
 
-    return Promise.all(
-      allPosts.map(async (post) => ({
-        id: post.id,
-        slug: post.slug,
-        title: post.title,
-        content: post.content,
-        excerpt: post.excerpt || "",
-        coverColor: post.coverColor || "",
-        published: post.published,
-        listed: post.listed,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        viewCount: post.viewCount ?? 0,
-        pinned: post.pinned,
-        publishAt: post.publishAt,
-        seriesSlug: post.seriesSlug || null,
-        category: post.category || "",
-        seriesOrder: post.seriesOrder ?? 0,
-        tags: await this.getPostTags(post.id),
-      }))
-    );
+    const tagMap = await this.getPostTagsMap(allPosts.map((post) => post.id));
+
+    return allPosts.map((post) => ({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      content: post.content,
+      excerpt: post.excerpt || "",
+      coverColor: post.coverColor || "",
+      published: post.published,
+      listed: post.listed,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      viewCount: post.viewCount ?? 0,
+      pinned: post.pinned,
+      publishAt: post.publishAt,
+      seriesSlug: post.seriesSlug || null,
+      category: post.category || "",
+      seriesOrder: post.seriesOrder ?? 0,
+      tags: tagMap.get(post.id) || [],
+    }));
   }
 
   async getPostBySlug(slug: string): Promise<(Post & { tags: string[] }) | null> {
